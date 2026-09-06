@@ -1,0 +1,706 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Void Wizards</title>
+<meta name="description" content="A tactical spell duel for two to five players. Commit your Realms, spend the Power, and live with what you promised. In development.">
+<meta property="og:title" content="Void Wizards">
+<meta property="og:description" content="A tactical spell duel for two to five players. Last player alive wins.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://playvoidwizards.com/">
+<link rel="canonical" href="https://playvoidwizards.com/">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Spectral:ital,wght@0,300;0,400;0,600;1,300;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* ---------------------------------------------------------------
+   Void Wizards — one committed visual world: cold slate + parchment.
+   The ONLY chroma on this page is Affinity colour, so colour always
+   means something. Everything else is stone.
+   --------------------------------------------------------------- */
+:root{
+  --ground:#13151b;
+  --ground-lift:#1a1d25;
+  --ground-deep:#0d0f13;
+  --carve:#2b303b;
+  --carve-soft:#20242d;
+  --parchment:#e7e3d9;
+  --muted:#98a1b0;
+  --muted-dim:#6c7484;
+
+  --light:#e3cf94;
+  --dark:#a97ec0;
+  --solar:#e28c3c;
+  --frost:#8fc0dd;
+  --earthen:#9dae66;
+
+  --display:"Cinzel",Georgia,"Times New Roman",serif;
+  --body:"Spectral",Georgia,"Times New Roman",serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Consolas,monospace;
+
+  --measure:63ch;
+  --pad:clamp(1.25rem,5vw,3.5rem);
+  color-scheme:dark;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--parchment);
+  font-family:var(--body);
+  font-weight:300;
+  font-size:clamp(1rem,0.95rem + 0.25vw,1.115rem);
+  line-height:1.65;
+  overflow-x:hidden;
+}
+img{max-width:100%;display:block}
+a{color:inherit}
+.link{
+  color:var(--parchment);
+  text-decoration:none;
+  border-bottom:1px solid rgba(231,227,217,.32);
+  padding-bottom:1px;
+  transition:border-color .2s,color .2s;
+}
+.link:hover{border-bottom-color:var(--parchment)}
+:focus-visible{outline:2px solid var(--parchment);outline-offset:3px}
+
+h1,h2,h3{font-family:var(--display);font-weight:500;text-wrap:balance;margin:0;line-height:1.15}
+p{margin:0}
+
+.label{
+  font-family:var(--mono);
+  font-size:.72rem;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--muted-dim);
+  font-weight:500;
+}
+
+.shell{max-width:1180px;margin:0 auto;padding-inline:var(--pad)}
+.prose{max-width:var(--measure)}
+
+/* ---------- carved section rule ---------- */
+.rule{
+  border:0;height:0;
+  border-top:1px solid var(--carve);
+  border-bottom:1px solid rgba(231,227,217,.05);
+  margin:0;
+}
+
+/* =========================================================
+   HERO
+   ========================================================= */
+.hero{position:relative;overflow:hidden;border-bottom:1px solid var(--carve)}
+.hero__art{
+  position:absolute;inset:0;
+  display:grid;grid-template-columns:repeat(5,1fr);
+  opacity:.34;
+}
+.hero__art img{
+  width:100%;height:100%;object-fit:cover;
+  filter:grayscale(.4) contrast(1.02) blur(2px);
+  transform:scale(1.06);
+}
+.hero__art::after{
+  content:"";position:absolute;inset:0;
+  background:
+    linear-gradient(to bottom, rgba(19,21,27,.55) 0%, rgba(19,21,27,.82) 45%, var(--ground) 100%),
+    radial-gradient(120% 85% at 50% 15%, transparent 20%, rgba(13,15,19,.9) 100%);
+}
+.hero__inner{
+  position:relative;
+  padding-block:clamp(4.5rem,13vh,8rem) clamp(3.5rem,9vh,6rem);
+  display:flex;flex-direction:column;gap:1.75rem;
+}
+.wordmark{
+  font-family:var(--display);
+  font-weight:700;
+  font-size:clamp(2.7rem,10.5vw,7.5rem);
+  letter-spacing:.06em;
+  line-height:.95;
+  margin:0;
+  text-transform:uppercase;
+}
+.wordmark span{display:block}
+.wordmark span:last-child{
+  color:transparent;
+  -webkit-text-stroke:1px rgba(231,227,217,.62);
+  padding-left:.06em;
+}
+.hero__lede{
+  max-width:52ch;
+  font-size:clamp(1.1rem,1rem + .55vw,1.4rem);
+  line-height:1.55;
+  color:var(--parchment);
+}
+.hero__kicker{
+  font-style:italic;
+  color:var(--muted);
+  max-width:46ch;
+}
+.hero__meta{
+  display:flex;flex-wrap:wrap;gap:.5rem 1.5rem;align-items:baseline;
+  padding-top:.5rem;
+}
+.pill{
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;
+  border:1px solid var(--carve);padding:.4rem .7rem;color:var(--muted);
+}
+.pill--live{color:var(--parchment);border-color:rgba(231,227,217,.35)}
+
+/* =========================================================
+   Shared section frame
+   ========================================================= */
+section{padding-block:clamp(3.5rem,9vh,6.5rem)}
+.sec-head{display:flex;flex-direction:column;gap:.9rem;margin-bottom:2.75rem}
+.sec-head h2{font-size:clamp(1.6rem,1.2rem + 1.5vw,2.5rem);letter-spacing:.03em}
+.sec-head p{color:var(--muted);max-width:var(--measure)}
+
+/* =========================================================
+   THE RHYTHM — interactive commit / restore
+   ========================================================= */
+.rhythm{background:var(--ground-deep);border-block:1px solid var(--carve)}
+.rhythm__grid{display:grid;gap:clamp(2rem,5vw,4rem);grid-template-columns:1fr}
+@media(min-width:900px){.rhythm__grid{grid-template-columns:minmax(0,1fr) minmax(0,26rem)}}
+
+.realms{display:flex;gap:clamp(.75rem,2.5vw,1.5rem);flex-wrap:wrap;align-items:flex-start}
+.realm{
+  --hue:var(--muted);
+  width:clamp(6.5rem,20vw,8.5rem);
+  aspect-ratio:5/7;
+  background:linear-gradient(165deg,var(--ground-lift),#101319);
+  border:1px solid var(--carve);
+  color:var(--parchment);
+  font-family:var(--body);
+  display:flex;flex-direction:column;
+  padding:.55rem;
+  cursor:pointer;
+  text-align:left;
+  transition:transform .42s cubic-bezier(.34,1.3,.5,1), border-color .3s, box-shadow .3s;
+  transform-origin:50% 50%;
+}
+.realm:hover{border-color:var(--hue)}
+.realm[aria-pressed="true"]{
+  transform:rotate(90deg);
+  border-color:var(--hue);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--hue) 40%,transparent);
+}
+.realm__art{
+  position:relative;
+  aspect-ratio:4/3;
+  overflow:hidden;
+  border:1px solid var(--carve);
+  margin-bottom:.55rem;
+  background:#0b0d11;
+}
+.realm__art img.realm__pic{width:100%;height:100%;object-fit:cover}
+.realm__icon{
+  position:absolute;top:.3rem;left:.3rem;
+  width:1.15rem;height:1.15rem;
+  object-fit:contain;
+  opacity:.95;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.9));
+  z-index:2;
+}
+.realm__name{font-size:.92rem;line-height:1.2;font-weight:400}
+.realm__rule{
+  font-family:var(--mono);font-size:.62rem;letter-spacing:.06em;
+  color:var(--hue);text-transform:uppercase;
+}
+.realm__foot{margin-top:auto;padding-top:.4rem}
+.realm--light{--hue:var(--light)}
+.realm--frost{--hue:var(--frost)}
+.realm--earthen{--hue:var(--earthen)}
+
+.rhythm__stage{
+  min-height:calc(clamp(6.5rem,20vw,8.5rem) * 7/5 + 1rem);
+  display:flex;align-items:center;
+}
+
+.battery{border:1px solid var(--carve);padding:1.35rem;background:var(--ground)}
+.battery__head{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;margin-bottom:1rem}
+.battery__count{font-family:var(--mono);font-size:1.5rem;font-variant-numeric:tabular-nums;color:var(--parchment)}
+.pips{display:flex;gap:.45rem;flex-wrap:wrap;min-height:1.6rem;align-items:center}
+.pip{
+  width:1.15rem;height:1.15rem;border-radius:50%;
+  background:var(--pip);
+  box-shadow:0 0 10px color-mix(in srgb,var(--pip) 55%,transparent);
+  animation:pip-in .35s cubic-bezier(.34,1.4,.5,1) both;
+}
+@keyframes pip-in{from{transform:scale(.2);opacity:0}to{transform:scale(1);opacity:1}}
+.pips__empty{font-style:italic;color:var(--muted-dim);font-size:.95rem}
+
+.stages{display:flex;flex-direction:column;gap:.6rem;margin-top:1.5rem}
+.stage-btn{
+  font-family:var(--mono);font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;
+  background:transparent;border:1px solid var(--carve);color:var(--parchment);
+  padding:.75rem .9rem;cursor:pointer;text-align:left;
+  transition:background .2s,border-color .2s;
+}
+.stage-btn:hover{background:var(--ground-lift);border-color:rgba(231,227,217,.4)}
+.stage-btn small{display:block;font-family:var(--body);font-size:.85rem;letter-spacing:0;text-transform:none;color:var(--muted);margin-top:.2rem}
+.rhythm__note{margin-top:1.5rem;color:var(--muted);font-style:italic;font-size:.95rem}
+
+/* =========================================================
+   AFFINITIES
+   ========================================================= */
+.affinities{display:grid;gap:1px;background:var(--carve);grid-template-columns:1fr}
+@media(min-width:640px){.affinities{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:1000px){.affinities{grid-template-columns:repeat(5,1fr)}}
+
+.aff{
+  background:var(--ground);
+  display:flex;flex-direction:column;
+  position:relative;
+}
+.aff__img{position:relative;aspect-ratio:3/2;overflow:hidden}
+@media(min-width:1000px){.aff__img{aspect-ratio:3/4}}
+.aff__img img{width:100%;height:100%;object-fit:cover;filter:saturate(.85);transition:transform .8s ease, filter .6s ease}
+.aff:hover .aff__img img{transform:scale(1.045);filter:saturate(1.05)}
+.aff__img::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(to top,var(--ground) 2%,rgba(19,21,27,.15) 55%,rgba(19,21,27,.35) 100%);
+}
+.aff__img .aff__sym{
+  position:absolute;top:.9rem;left:.9rem;
+  width:1.6rem;height:1.6rem;z-index:2;
+  object-fit:contain;
+  opacity:.92;
+  filter:drop-shadow(0 1px 3px rgba(0,0,0,.85));
+}
+.aff__body{padding:1.1rem 1.15rem 1.6rem;display:flex;flex-direction:column;gap:.55rem;flex:1}
+.aff__name{font-family:var(--mono);font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--hue)}
+.aff__adept{font-family:var(--display);font-size:1.05rem;line-height:1.25}
+.aff__passive{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-dim)}
+.aff__text{font-size:.92rem;color:var(--muted);line-height:1.55}
+.aff--light{--hue:var(--light)}
+.aff--dark{--hue:var(--dark)}
+.aff--solar{--hue:var(--solar)}
+.aff--frost{--hue:var(--frost)}
+.aff--earthen{--hue:var(--earthen)}
+
+/* =========================================================
+   THE TURN — a real ordered sequence, so numbers are honest
+   ========================================================= */
+.turn{background:var(--ground-deep);border-block:1px solid var(--carve)}
+.turn__list{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.turn__item{
+  display:grid;grid-template-columns:2.75rem 1fr;gap:1.25rem;
+  padding-block:1.4rem;
+  border-top:1px solid var(--carve-soft);
+  align-items:start;
+}
+.turn__item:first-child{border-top:0}
+.turn__n{font-family:var(--mono);font-size:.82rem;color:var(--muted-dim);padding-top:.28rem;font-variant-numeric:tabular-nums}
+.turn__name{font-family:var(--display);font-size:1.1rem;letter-spacing:.02em}
+.turn__desc{color:var(--muted);font-size:.96rem;margin-top:.3rem;max-width:58ch}
+
+/* =========================================================
+   TABLE — life by player count
+   ========================================================= */
+.split{display:grid;gap:clamp(2rem,5vw,4rem);grid-template-columns:1fr}
+@media(min-width:860px){.split{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-family:var(--mono);font-size:.9rem;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:.72rem .9rem;border-bottom:1px solid var(--carve-soft)}
+thead th{
+  font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted-dim);
+  border-bottom-color:var(--carve);font-weight:500;
+}
+tbody tr:hover{background:var(--ground-lift)}
+td:first-child{color:var(--parchment)}
+td:last-child{color:var(--muted)}
+
+/* =========================================================
+   STATUS
+   ========================================================= */
+.status__list{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.status__row{
+  display:grid;grid-template-columns:auto 1fr;gap:1rem;align-items:baseline;
+  padding-block:.95rem;border-top:1px solid var(--carve-soft);
+}
+.status__row:first-child{border-top:0}
+.status__tag{
+  font-family:var(--mono);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;
+  border:1px solid var(--carve);padding:.28rem .55rem;color:var(--muted-dim);white-space:nowrap;
+}
+.status__tag--on{color:var(--parchment);border-color:rgba(231,227,217,.4)}
+.status__tag--now{color:var(--solar);border-color:color-mix(in srgb,var(--solar) 45%,transparent)}
+.status__txt{color:var(--muted)}
+.status__txt b{color:var(--parchment);font-weight:600}
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+footer{border-top:1px solid var(--carve);padding-block:3rem;background:var(--ground-deep)}
+.foot{display:flex;flex-wrap:wrap;gap:1.5rem 2.5rem;justify-content:space-between;align-items:baseline}
+.foot p{color:var(--muted-dim);font-size:.88rem}
+.foot__mark{font-family:var(--display);letter-spacing:.14em;text-transform:uppercase;font-size:.95rem;color:var(--muted)}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero__art" aria-hidden="true">
+    <img src="assets/adept_light.jpg" alt="">
+    <img src="assets/adept_dark.jpg" alt="">
+    <img src="assets/adept_solar.jpg" alt="">
+    <img src="assets/adept_frost.jpg" alt="">
+    <img src="assets/adept_earthen.jpg" alt="">
+  </div>
+  <div class="shell hero__inner">
+    <p class="label">Set VW01 &middot; In development</p>
+    <h1 class="wordmark"><span>Void</span><span>Wizards</span></h1>
+    <p class="hero__lede">A tactical spell duel for two to five. Commit your Realms for Power, spend it on Minions and Sorceries, and get it back one turn later than you would like.</p>
+    <p class="hero__kicker">Last player alive wins. There is nothing more to victory than that.</p>
+    <div class="hero__meta">
+      <span class="pill pill--live">Local network play &mdash; working</span>
+      <span class="pill">Internet play &mdash; being built</span>
+      <span class="pill">113 cards &middot; 5 Adepts</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<!-- ============ THE RHYTHM ============ -->
+<section class="rhythm">
+  <div class="shell">
+    <div class="sec-head">
+      <p class="label">The core rhythm</p>
+      <h2>Commit, spend, wait.</h2>
+      <p>Every Realm you control is a switch you can throw once. Turn it sideways &mdash; <em>commit</em> it &mdash; and it pays you one Power of its Affinity. It stays sideways until your own Restoration Stage. Try it.</p>
+    </div>
+
+    <div class="rhythm__grid">
+      <div class="rhythm__stage">
+        <div class="realms" id="realms">
+          <button class="realm realm--light" type="button" aria-pressed="false" data-aff="light" data-hue="--light">
+            <span class="realm__art">
+              <img class="realm__icon" src="assets/icon_light.png" alt="">
+              <img class="realm__pic" src="assets/realm_light.jpg" alt="Radiant Star — a shining star over a bright landscape">
+            </span>
+            <span class="realm__foot">
+              <span class="realm__name">Radiant Star</span><br>
+              <span class="realm__rule">Commit: add 1 Light</span>
+            </span>
+          </button>
+          <button class="realm realm--frost" type="button" aria-pressed="false" data-aff="frost" data-hue="--frost">
+            <span class="realm__art">
+              <img class="realm__icon" src="assets/icon_frost.png" alt="">
+              <img class="realm__pic" src="assets/realm_frost.jpg" alt="Frostpeak — a frozen mountain summit">
+            </span>
+            <span class="realm__foot">
+              <span class="realm__name">Frostpeak</span><br>
+              <span class="realm__rule">Commit: add 1 Frost</span>
+            </span>
+          </button>
+          <button class="realm realm--earthen" type="button" aria-pressed="false" data-aff="earthen" data-hue="--earthen">
+            <span class="realm__art">
+              <img class="realm__icon" src="assets/icon_earthen.png" alt="">
+              <img class="realm__pic" src="assets/realm_earthen.jpg" alt="Verdant Grove — a deep green wooded grove">
+            </span>
+            <span class="realm__foot">
+              <span class="realm__name">Verdant Grove</span><br>
+              <span class="realm__rule">Commit: add 1 Earthen</span>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <div class="battery">
+          <div class="battery__head">
+            <span class="label">Energy Battery</span>
+            <span class="battery__count" id="count">0</span>
+          </div>
+          <div class="pips" id="pips"><span class="pips__empty">Empty. Commit a Realm.</span></div>
+        </div>
+
+        <div class="stages">
+          <button class="stage-btn" type="button" id="btn-end">
+            End Stage
+            <small>Unused Power disappears. The Realms stay down.</small>
+          </button>
+          <button class="stage-btn" type="button" id="btn-restore">
+            Your Restoration Stage
+            <small>Everything you committed stands back up.</small>
+          </button>
+        </div>
+
+        <p class="rhythm__note">That gap is the whole game. Power spent holding a trick on somebody else&rsquo;s turn is Power you do not have on your own.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ AFFINITIES ============ -->
+<section>
+  <div class="shell">
+    <div class="sec-head">
+      <p class="label">Five Affinities, five Adepts</p>
+      <h2>Pick one. Nobody else can have it.</h2>
+      <p>Your Adept is your avatar and a real creature on the board. It starts face down and useless. Pay its cost to flip it and it hits the table with a bang &mdash; and from that moment it can be attacked, blocked and killed like anything else.</p>
+    </div>
+  </div>
+
+  <div class="affinities">
+    <article class="aff aff--light">
+      <div class="aff__img">
+        <img src="assets/icon_light.png" alt="" class="aff__sym" width="28" height="28">
+        <img src="assets/adept_light.jpg" alt="Seraphine, Dawncaller — a robed figure haloed in light">
+      </div>
+      <div class="aff__body">
+        <p class="aff__name">Light</p>
+        <h3 class="aff__adept">Seraphine, Dawncaller</h3>
+        <p class="aff__passive">Unbroken Vigil</p>
+        <p class="aff__text">Hold your hand and your Minions shrug off damage. Swing, and the protection is gone until you next stand still.</p>
+      </div>
+    </article>
+
+    <article class="aff aff--dark">
+      <div class="aff__img">
+        <img src="assets/icon_dark.png" alt="" class="aff__sym" width="28" height="28">
+        <img src="assets/adept_dark.jpg" alt="Morvath, Soulbinder — a dark sorcerer amid bound souls">
+      </div>
+      <div class="aff__body">
+        <p class="aff__name">Dark</p>
+        <h3 class="aff__adept">Morvath, Soulbinder</h3>
+        <p class="aff__passive">Harvest</p>
+        <p class="aff__text">Your own dead pay you. The first Minion you lose each turn draws you a card, and somebody across the table loses Life for it.</p>
+      </div>
+    </article>
+
+    <article class="aff aff--solar">
+      <div class="aff__img">
+        <img src="assets/icon_solar.png" alt="" class="aff__sym" width="28" height="28">
+        <img src="assets/adept_solar.jpg" alt="Kaelis, Sunforged — a smith wreathed in forge-fire">
+      </div>
+      <div class="aff__body">
+        <p class="aff__name">Solar</p>
+        <h3 class="aff__adept">Kaelis, Sunforged</h3>
+        <p class="aff__passive">Forge-Heat</p>
+        <p class="aff__text">Everything you summon can attack the moment it lands. No waiting, no build-up, no mercy.</p>
+      </div>
+    </article>
+
+    <article class="aff aff--frost">
+      <div class="aff__img">
+        <img src="assets/icon_frost.png" alt="" class="aff__sym" width="28" height="28">
+        <img src="assets/adept_frost.jpg" alt="Medalin, Iceweaver — a hooded figure in a blizzard holding an ice stave">
+      </div>
+      <div class="aff__body">
+        <p class="aff__name">Frost</p>
+        <h3 class="aff__adept">Medalin, Iceweaver</h3>
+        <p class="aff__passive">Deepening Cold</p>
+        <p class="aff__text">Enemy Minions arrive already committed. They turn up to the fight lying down, and there is nothing they can do about it.</p>
+      </div>
+    </article>
+
+    <article class="aff aff--earthen">
+      <div class="aff__img">
+        <img src="assets/icon_earthen.png" alt="" class="aff__sym" width="28" height="28">
+        <img src="assets/adept_earthen.jpg" alt="Bertha of Girthwall — an armoured figure rooted to the earth">
+      </div>
+      <div class="aff__body">
+        <p class="aff__name">Earthen</p>
+        <h3 class="aff__adept">Bertha of Girthwall</h3>
+        <p class="aff__passive">Deep Foundations</p>
+        <p class="aff__text">The first Realm you commit each turn pays double. Slow to start, impossible to out-resource.</p>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ============ THE TURN ============ -->
+<section class="turn">
+  <div class="shell">
+    <div class="sec-head">
+      <p class="label">One turn, in order</p>
+      <h2>Six stages, and a second bite.</h2>
+      <p>A turn is one player&rsquo;s pass through these. A round is everybody taking one. Every card in the game is written in turns &mdash; at a five-player table, that is a fivefold difference.</p>
+    </div>
+
+    <ol class="turn__list">
+      <li class="turn__item">
+        <span class="turn__n">01</span>
+        <div>
+          <h3 class="turn__name">Restoration</h3>
+          <p class="turn__desc">Your committed cards stand back up. Every Minion on the table &mdash; not just yours &mdash; heals every wound. A cut lasts until the next Restoration, whoever&rsquo;s turn that is.</p>
+        </div>
+      </li>
+      <li class="turn__item">
+        <span class="turn__n">02</span>
+        <div>
+          <h3 class="turn__name">Draw</h3>
+          <p class="turn__desc">One card, and you choose blind which deck it comes from: Spells or Realms. Seven to open the game. Whoever goes first skips this on turn one &mdash; that is the price of the seat.</p>
+        </div>
+      </li>
+      <li class="turn__item">
+        <span class="turn__n">03</span>
+        <div>
+          <h3 class="turn__name">Operations</h3>
+          <p class="turn__desc">Play a Realm, summon Minions, cast Sorceries, equip Relics, flip your Adept face up.</p>
+        </div>
+      </li>
+      <li class="turn__item">
+        <span class="turn__n">04</span>
+        <div>
+          <h3 class="turn__name">Combat</h3>
+          <p class="turn__desc">Attack a player, or attack their Adept directly. Anyone at the table may intervene &mdash; on either side.</p>
+        </div>
+      </li>
+      <li class="turn__item">
+        <span class="turn__n">05</span>
+        <div>
+          <h3 class="turn__name">Second Operations</h3>
+          <p class="turn__desc">A second window after the dust settles, so you can act on what actually survived rather than on what you hoped would.</p>
+        </div>
+      </li>
+      <li class="turn__item">
+        <span class="turn__n">06</span>
+        <div>
+          <h3 class="turn__name">End</h3>
+          <p class="turn__desc">Discard what you did not want &mdash; and it is <em>offered to whoever is on the lowest Life</em>, to take or refuse. Then trim to seven, and any Power you did not spend is gone.</p>
+        </div>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============ TABLE / POLITICS ============ -->
+<section>
+  <div class="shell split">
+    <div>
+      <div class="sec-head">
+        <p class="label">Two to five players</p>
+        <h2>The duel is fine. The table is the point.</h2>
+      </div>
+      <div class="prose">
+        <p>Three to five players is a free-for-all, and conversation, trading, bargaining and betrayal are part of the rules rather than something that happens around them. You may only <em>open</em> a negotiation if you hold the live decision &mdash; you are the active player, or somebody has just aimed something at you. Bystanders can answer an offer. They cannot start one.</p>
+        <p style="margin-top:1.1rem">Promises are not binding. An agreed trade is.</p>
+      </div>
+    </div>
+
+    <div>
+      <p class="label" style="margin-bottom:1rem">Starting Life by table size</p>
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr><th scope="col">Players</th><th scope="col">Life</th><th scope="col">Why</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>2</td><td>20</td><td>The duel</td></tr>
+            <tr><td>3</td><td>17</td><td>Politics begins</td></tr>
+            <tr><td>4</td><td>15</td><td>Crowded</td></tr>
+            <tr><td>5</td><td>13</td><td>Full table</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="color:var(--muted);font-size:.92rem;margin-top:1rem;font-style:italic">Life drops as the table grows so every size lands in roughly the same thirteen-round game. At a flat 20, a five-player game runs half as long again.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ STATUS ============ -->
+<section class="turn">
+  <div class="shell">
+    <div class="sec-head">
+      <p class="label">Where it is up to</p>
+      <h2>Honest build status.</h2>
+      <p>Void Wizards is being built by one person in the evenings. Nothing below is a promise with a date on it.</p>
+    </div>
+
+    <ul class="status__list">
+      <li class="status__row">
+        <span class="status__tag status__tag--on">Working</span>
+        <span class="status__txt"><b>The game.</b> Full rules engine, five Adepts, 113 cards, AI opponents that assess the whole table before choosing who to hit.</span>
+      </li>
+      <li class="status__row">
+        <span class="status__tag status__tag--on">Working</span>
+        <span class="status__txt"><b>Play over a local network.</b> Host on one machine, join from another, up to five seats with humans and AI mixed.</span>
+      </li>
+      <li class="status__row">
+        <span class="status__tag status__tag--on">Working</span>
+        <span class="status__txt"><b>Card art.</b> Every card in the shipping set is illustrated.</span>
+      </li>
+      <li class="status__row">
+        <span class="status__tag status__tag--now">In progress</span>
+        <span class="status__txt"><b>Play over the internet.</b> A dedicated server is running in Sydney. Matches do not run on anybody&rsquo;s home PC.</span>
+      </li>
+      <li class="status__row">
+        <span class="status__tag">Planned</span>
+        <span class="status__txt"><b>Accounts and profiles.</b> Sign in, a match history, wins and losses, friends and private groups.</span>
+      </li>
+      <li class="status__row">
+        <span class="status__tag">Planned</span>
+        <span class="status__txt"><b>Custom modes.</b> The two-player and big-table variants as a per-game choice rather than a build.</span>
+      </li>
+    </ul>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="shell foot">
+    <span class="foot__mark">Void Wizards</span>
+    <p>An independent card game in development. Set VW01. Not affiliated with anybody.</p>
+    <p>Say hello: <a class="link" href="mailto:hello@playvoidwizards.com">hello@playvoidwizards.com</a></p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var pips = document.getElementById('pips');
+  var count = document.getElementById('count');
+  var realms = Array.prototype.slice.call(document.querySelectorAll('.realm'));
+  var battery = [];
+
+  function render(){
+    count.textContent = battery.length;
+    if(!battery.length){
+      pips.innerHTML = '<span class="pips__empty">Empty. Commit a Realm.</span>';
+      return;
+    }
+    pips.innerHTML = '';
+    battery.forEach(function(hue){
+      var p = document.createElement('span');
+      p.className = 'pip';
+      p.style.setProperty('--pip','var(' + hue + ')');
+      pips.appendChild(p);
+    });
+  }
+
+  realms.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      if(btn.getAttribute('aria-pressed') === 'true') return;   // already committed
+      btn.setAttribute('aria-pressed','true');
+      battery.push(btn.dataset.hue);
+      render();
+    });
+  });
+
+  document.getElementById('btn-end').addEventListener('click', function(){
+    battery = [];
+    render();
+  });
+
+  document.getElementById('btn-restore').addEventListener('click', function(){
+    realms.forEach(function(b){ b.setAttribute('aria-pressed','false'); });
+  });
+
+  render();
+})();
+</script>
+
+</body>
+</html>
