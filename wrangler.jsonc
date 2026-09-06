@@ -5,13 +5,15 @@
   // in this folder as a website, and don't run any code." That is why there
   // is no build command and no script entry point.
   //
-  // "name" must match the Cloudflare project name.
+  // "name" MUST match the existing Cloudflare Worker exactly. Change it and
+  //   wrangler builds a NEW Worker under the new name and leaves the domain
+  //   pointing at the old one. It is an identity, not a label.
   // "compatibility_date" pins the Cloudflare runtime behaviour to how it
   //   worked on this date, so a future change on their end cannot silently
   //   alter how the site is served. Leave it alone unless you have a reason.
   // "assets.directory" is what gets published. "./" means this whole folder.
 
-  "name": "playvoidwizards-com",
+  "name": "wispy-brook-7be4",
   "compatibility_date": "2026-09-06",
   "assets": {
     "directory": "./"
