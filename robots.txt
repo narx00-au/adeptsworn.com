@@ -1,0 +1,5 @@
+# playvoidwizards.com
+# Search engines are welcome to index the whole site.
+
+User-agent: *
+Allow: /
