@@ -1,0 +1,19 @@
+{
+  // Void Wizards public website — https://playvoidwizards.com
+  //
+  // This is not a program. It tells Cloudflare one thing: "serve the files
+  // in this folder as a website, and don't run any code." That is why there
+  // is no build command and no script entry point.
+  //
+  // "name" must match the Cloudflare project name.
+  // "compatibility_date" pins the Cloudflare runtime behaviour to how it
+  //   worked on this date, so a future change on their end cannot silently
+  //   alter how the site is served. Leave it alone unless you have a reason.
+  // "assets.directory" is what gets published. "./" means this whole folder.
+
+  "name": "playvoidwizards-com",
+  "compatibility_date": "2026-09-06",
+  "assets": {
+    "directory": "./"
+  }
+}
