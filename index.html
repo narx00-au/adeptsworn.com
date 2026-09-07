@@ -3,19 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Void Wizards</title>
+<title>Adeptsworn</title>
 <meta name="description" content="A tactical spell duel for two to five players. Commit your Realms, spend the Power, and live with what you promised. In development.">
-<meta property="og:title" content="Void Wizards">
+<meta property="og:title" content="Adeptsworn">
 <meta property="og:description" content="A tactical spell duel for two to five players. Last player alive wins.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://playvoidwizards.com/">
-<link rel="canonical" href="https://playvoidwizards.com/">
+<meta property="og:image" content="https://adeptsworn.com/assets/hero.jpg">
+<meta property="og:url" content="https://adeptsworn.com/">
+<link rel="canonical" href="https://adeptsworn.com/">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Spectral:ital,wght@0,300;0,400;0,600;1,300;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 /* ---------------------------------------------------------------
-   Void Wizards — one committed visual world: cold slate + parchment.
+   Adeptsworn — one committed visual world: cold slate + parchment.
    The ONLY chroma on this page is Affinity colour, so colour always
    means something. Everything else is stone.
    --------------------------------------------------------------- */
@@ -113,23 +114,30 @@ p{margin:0}
 }
 .hero__inner{
   position:relative;
-  padding-block:clamp(4.5rem,13vh,8rem) clamp(3.5rem,9vh,6rem);
+  padding-block:clamp(1.5rem,5vh,3rem) clamp(3.5rem,9vh,6rem);
   display:flex;flex-direction:column;gap:1.75rem;
 }
+/* The wordmark is the key art itself, not type. Its edges are already
+   faded to --ground in the file, so it melts into the page instead of
+   sitting in a visible box -- which means the page background and the
+   image background have to stay the same colour. Change --ground and
+   this asset has to be rebuilt. */
 .wordmark{
-  font-family:var(--display);
-  font-weight:700;
-  font-size:clamp(2.7rem,10.5vw,7.5rem);
-  letter-spacing:.06em;
-  line-height:.95;
-  margin:0;
-  text-transform:uppercase;
+  margin:0 0 -1.1rem;
+  line-height:0;
 }
-.wordmark span{display:block}
-.wordmark span:last-child{
-  color:transparent;
-  -webkit-text-stroke:1px rgba(231,227,217,.62);
-  padding-left:.06em;
+.wordmark img{
+  display:block;
+  width:100%;max-width:880px;height:auto;
+  margin-inline-start:-3.5%;
+}
+.hero__tagline{
+  font-family:var(--display);
+  font-size:clamp(1rem,.85rem + .75vw,1.5rem);
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin:0;
 }
 .hero__lede{
   max-width:52ch;
@@ -403,16 +411,10 @@ select.finput{appearance:none;cursor:pointer}
 <body>
 
 <header class="hero">
-  <div class="hero__art" aria-hidden="true">
-    <img src="assets/adept_light.jpg" alt="">
-    <img src="assets/adept_dark.jpg" alt="">
-    <img src="assets/adept_solar.jpg" alt="">
-    <img src="assets/adept_frost.jpg" alt="">
-    <img src="assets/adept_earthen.jpg" alt="">
-  </div>
   <div class="shell hero__inner">
     <p class="label">Set VW01 &middot; In development</p>
-    <h1 class="wordmark"><span>Void</span><span>Wizards</span></h1>
+    <h1 class="wordmark"><img src="assets/hero.jpg" width="1600" height="902" alt="Adeptsworn" fetchpriority="high"></h1>
+    <p class="hero__tagline">Every oath is temporary.</p>
     <p class="hero__lede">A tactical spell duel for two to five. Commit your Realms for Power, spend it on Minions and Sorceries, and get it back one turn later than you would like.</p>
     <p class="hero__kicker">Last player alive wins. There is nothing more to victory than that.</p>
     <div class="hero__meta">
@@ -670,7 +672,7 @@ select.finput{appearance:none;cursor:pointer}
     <div class="sec-head">
       <p class="label">Where it is up to</p>
       <h2>Honest build status.</h2>
-      <p>Void Wizards is being built by one person in the evenings. Nothing below is a promise with a date on it.</p>
+      <p>Adeptsworn is being built by one person in the evenings. Nothing below is a promise with a date on it.</p>
     </div>
 
     <ul class="status__list">
@@ -717,11 +719,11 @@ select.finput{appearance:none;cursor:pointer}
       <!-- ---------- FEEDBACK ---------- -->
       <form class="formcard" id="form-feedback" novalidate>
         <h3>Feedback</h3>
-        <p class="formcard__lede">Balance, rules, the art, anything that felt wrong. Goes to <strong>feedback@playvoidwizards.com</strong>. For a bug you can reproduce, <a class="link" href="mailto:devops@playvoidwizards.com">devops@</a> is the faster route.</p>
+        <p class="formcard__lede">Balance, rules, the art, anything that felt wrong. Goes to <strong>feedback@adeptsworn.com</strong>. For a bug you can reproduce, <a class="link" href="mailto:devops@adeptsworn.com">devops@</a> is the faster route.</p>
 
         <input type="hidden" name="access_key" value="acd70eda-9d65-41a5-b02a-1cc67fbde65d">
-        <input type="hidden" name="subject" value="Void Wizards — feedback from the website">
-        <input type="hidden" name="from_name" value="playvoidwizards.com">
+        <input type="hidden" name="subject" value="Adeptsworn — feedback from the website">
+        <input type="hidden" name="from_name" value="adeptsworn.com">
         <div class="fhp" aria-hidden="true"><label>Leave this empty<input type="text" name="botcheck" tabindex="-1" autocomplete="off"></label></div>
 
         <div class="field">
@@ -752,11 +754,11 @@ select.finput{appearance:none;cursor:pointer}
       <!-- ---------- CONTACT ---------- -->
       <form class="formcard" id="form-contact" novalidate>
         <h3>Contact</h3>
-        <p class="formcard__lede">Anything else &mdash; questions, playtesting, or just saying hello. Goes to <strong>hello@playvoidwizards.com</strong>.</p>
+        <p class="formcard__lede">Anything else &mdash; questions, playtesting, or just saying hello. Goes to <strong>hello@adeptsworn.com</strong>.</p>
 
         <input type="hidden" name="access_key" value="9514d3b8-1410-4d06-88d1-1735f6fd9f94">
-        <input type="hidden" name="subject" value="Void Wizards — message from the website">
-        <input type="hidden" name="from_name" value="playvoidwizards.com">
+        <input type="hidden" name="subject" value="Adeptsworn — message from the website">
+        <input type="hidden" name="from_name" value="adeptsworn.com">
         <div class="fhp" aria-hidden="true"><label>Leave this empty<input type="text" name="botcheck" tabindex="-1" autocomplete="off"></label></div>
 
         <div class="field">
@@ -783,9 +785,9 @@ select.finput{appearance:none;cursor:pointer}
     <div class="contact__foot">
       <p><strong>Prefer email?</strong> These are the same addresses the game itself gives you:</p>
       <ul class="addrs">
-        <li><span class="addrs__what">Bug reports</span> <a class="link" href="mailto:devops@playvoidwizards.com">devops@playvoidwizards.com</a></li>
-        <li><span class="addrs__what">Feedback</span> <a class="link" href="mailto:feedback@playvoidwizards.com">feedback@playvoidwizards.com</a></li>
-        <li><span class="addrs__what">Anything else</span> <a class="link" href="mailto:hello@playvoidwizards.com">hello@playvoidwizards.com</a></li>
+        <li><span class="addrs__what">Bug reports</span> <a class="link" href="mailto:devops@adeptsworn.com">devops@adeptsworn.com</a></li>
+        <li><span class="addrs__what">Feedback</span> <a class="link" href="mailto:feedback@adeptsworn.com">feedback@adeptsworn.com</a></li>
+        <li><span class="addrs__what">Anything else</span> <a class="link" href="mailto:hello@adeptsworn.com">hello@adeptsworn.com</a></li>
       </ul>
       <p>Messages sent through the forms above are relayed by <a class="link" href="https://web3forms.com" rel="noopener">Web3Forms</a>, which passes them to my inbox. Your address is used to reply to you and nothing else &mdash; there is no mailing list, and nothing is stored on this site.</p>
     </div>
@@ -796,9 +798,9 @@ select.finput{appearance:none;cursor:pointer}
 
 <footer>
   <div class="shell foot">
-    <span class="foot__mark">Void Wizards</span>
+    <span class="foot__mark">Adeptsworn</span>
     <p>An independent card game in development. Set VW01. Not affiliated with anybody.</p>
-    <p>Say hello: <a class="link" href="mailto:hello@playvoidwizards.com">hello@playvoidwizards.com</a></p>
+    <p>Say hello: <a class="link" href="mailto:hello@adeptsworn.com">hello@adeptsworn.com</a></p>
   </div>
 </footer>
 
