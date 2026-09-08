@@ -408,12 +408,49 @@ select.finput{appearance:none;cursor:pointer}
 @media (prefers-reduced-motion:reduce){
   *{animation-duration:.01ms!important;transition-duration:.01ms!important}
 }
+
+/* =========================================================
+   ACCOUNT STRIP — added 8 September 2026 with Discord sign-in.
+   Deliberately NOT Discord blurple. This page's own rule, written
+   at the top of this stylesheet, is that the only chroma here is
+   Affinity colour, so colour always means something. A purple
+   button would be the first thing on the page that means nothing.
+   It is stone, like every other control.
+   ========================================================= */
+.account{
+  display:flex;justify-content:flex-end;align-items:center;gap:1rem;
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  text-transform:uppercase;
+  margin-bottom:.5rem;
+}
+.account__who{color:var(--muted)}
+/* A person's name is not a label. Everything else in this strip is
+   uppercase because it is furniture; the name renders exactly as
+   they typed it. */
+.account__who strong{color:var(--parchment);font-weight:500;letter-spacing:.06em;text-transform:none;font-size:.8rem}
+.account__in,.account__out{
+  color:var(--parchment);text-decoration:none;
+  border:1px solid var(--carve);
+  background:var(--ground-lift);
+  padding:.5rem .9rem;
+  transition:border-color .2s,background .2s;
+}
+.account__in:hover,.account__out:hover{
+  border-color:var(--muted-dim);
+  background:var(--carve-soft);
+}
+.account__out{border-color:transparent;background:none;padding:.5rem 0;color:var(--muted-dim)}
+.account__out:hover{background:none;border-color:transparent;color:var(--parchment)}
 </style>
 </head>
 <body>
 
 <header class="hero">
   <div class="shell hero__inner">
+    <!-- Filled in by script once /auth/me answers, so nobody ever sees
+         the wrong state for a moment. Stays hidden if the Worker is not
+         answering, which is what the site looked like before 8 Sept. -->
+    <div class="account" id="account" hidden></div>
     <p class="label">Set VW01 &middot; In development</p>
     <h1 class="wordmark"><img src="assets/hero.jpg" width="1600" height="902" alt="Adeptsworn" fetchpriority="high"></h1>
     <p class="hero__tagline">Every oath is temporary.</p>
@@ -911,5 +948,49 @@ select.finput{appearance:none;cursor:pointer}
 })();
 </script>
 
+<script>
+/* ---------------------------------------------------------------
+   WHO IS SIGNED IN.
+   Asks the Worker at /auth/me and fills the strip at the top. If
+   anything at all goes wrong -- no Worker deployed, no answer, an
+   answer that is not JSON -- the strip simply stays hidden and the
+   page is exactly what it was before sign-in existed. A site that
+   half-works is worse than one that does not mention the feature.
+   --------------------------------------------------------------- */
+(async function () {
+  var el = document.getElementById("account");
+  if (!el) return;
+  try {
+    var r = await fetch("/auth/me", { headers: { Accept: "application/json" } });
+    if (!r.ok) return;
+    var me = await r.json();
+    if (me.signedIn) {
+      var who = document.createElement("span");
+      who.className = "account__who";
+      who.appendChild(document.createTextNode("Signed in as "));
+      var name = document.createElement("strong");
+      // textContent, NEVER innerHTML. A Discord display name is somebody
+      // else's text and they choose every character of it.
+      name.textContent = me.name || "you";
+      who.appendChild(name);
+      var out = document.createElement("a");
+      out.className = "account__out";
+      out.href = "/auth/logout";
+      out.textContent = "Sign out";
+      el.appendChild(who);
+      el.appendChild(out);
+    } else {
+      var into = document.createElement("a");
+      into.className = "account__in";
+      into.href = "/auth/login";
+      into.textContent = "Sign in with Discord";
+      el.appendChild(into);
+    }
+    el.hidden = false;
+  } catch (e) {
+    /* leave it hidden */
+  }
+})();
+</script>
 </body>
 </html>

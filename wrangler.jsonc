@@ -1,9 +1,10 @@
 {
   // Adeptsworn public website — https://adeptsworn.com
   //
-  // This is not a program. It tells Cloudflare one thing: "serve the files
-  // in this folder as a website, and don't run any code." That is why there
-  // is no build command and no script entry point.
+  // THIS USED TO SAY "this is not a program". As of 8 September 2026 it
+  // is one: there is a Worker script now, and it does exactly one job —
+  // signing in with Discord. Everything else on this site is still a
+  // plain file served without any code running.
   //
   // "name" MUST match the existing Cloudflare Worker exactly. Change it and
   //   wrangler builds a NEW Worker under the new name and leaves the domain
@@ -12,10 +13,64 @@
   //   worked on this date, so a future change on their end cannot silently
   //   alter how the site is served. Leave it alone unless you have a reason.
   // "assets.directory" is what gets published. "./" means this whole folder.
+  // "main" is the Worker script. Cloudflare serves a matching FILE first and
+  //   only calls the script when there is no file at that address — so
+  //   index.html, assets\ and robots.txt reach people exactly as before,
+  //   and a bug in the script cannot take the site down. Only /auth/... is
+  //   handled by code.
+  // "assets.binding" lets the script hand a request back to the file server.
+  //   It is only there as a safety net for an address that is neither.
+  //
+  // ------------------------------------------------------------------
+  //  WHY THE CLIENT ID IS IN THIS FILE AND THE OTHER TWO ARE NOT
+  // ------------------------------------------------------------------
+  // The Discord Client ID is PUBLIC BY DESIGN. It travels in the address
+  // bar of every person who signs in, so putting it in a public repo
+  // gives away nothing that was not already on show.
+  //
+  // Keeping it here rather than in the Cloudflare dashboard is deliberate.
+  // Cloudflare's own documentation does NOT settle what happens to a
+  // plain variable set in the dashboard when a later deploy arrives with
+  // a config that does not mention it (checked 8 Sept, not remembered).
+  // A value declared HERE cannot be quietly lost that way, and it is
+  // version-controlled besides. So: sidestep the question rather than
+  // find out the hard way, six weeks from now, with a login that stopped
+  // working and nothing in a log to say why.
+  //
+  // THE OTHER TWO ARE REAL SECRETS AND MUST NEVER APPEAR IN THIS
+  // REPOSITORY, in this file or any other:
+  //
+  //   DISCORD_CLIENT_SECRET   set on the Worker in Cloudflare, encrypted
+  //   SESSION_SECRET          same. Ours. Any long random string.
+  //
+  // Cloudflare's docs DO confirm secrets survive a deploy. A secret
+  // committed to a public repo is burned the moment it lands, and
+  // deleting it afterwards does not help — the commit stays in a public
+  // history.
+  //
+  // ------------------------------------------------------------------
+  //  ONE UNTIDINESS, WRITTEN DOWN RATHER THAN HIDDEN
+  // ------------------------------------------------------------------
+  // Because the assets directory is this whole folder, src\index.js is
+  // ALSO published as a file, so https://adeptsworn.com/src/index.js can
+  // be read by anyone. Cloudflare documents no way to exclude a file from
+  // an assets folder — no .assetsignore, nothing in the assets config
+  // (three of their doc pages checked on 8 Sept). It leaks nothing: this
+  // repository is public, so that code was already readable on GitHub,
+  // and no secret is in any file here. The tidy fix, if it ever irritates,
+  // is to move the site's files into a public\ subfolder and point
+  // "directory" at it — but that moves index.html too, and
+  // Publish-Website.bat finds this folder BY index.html. Change both or
+  // neither.
 
   "name": "wispy-brook-7be4",
   "compatibility_date": "2026-09-06",
+  "main": "./src/index.js",
+  "vars": {
+    "DISCORD_CLIENT_ID": "1546109338169639013"
+  },
   "assets": {
-    "directory": "./"
+    "directory": "./",
+    "binding": "ASSETS"
   }
 }
