@@ -153,6 +153,48 @@ function problem(what, detail) {
   );
 }
 
+// ---------------------------------------------------------------------
+//  IS THIS ACTUALLY A CLIENT ID?
+//
+//  Added 8 September 2026, an hour after it would have helped.
+//
+//  A Discord application ID is a "snowflake" — a long DECIMAL NUMBER,
+//  around 18 to 19 digits. A Discord client SECRET is 32 mixed letters
+//  and digits. They sit next to each other on the same page in the
+//  developer portal, and on 8 September the secret went into the field
+//  named DISCORD_CLIENT_ID. Discord answered "Invalid Form Body", which
+//  is true and tells you nothing, and by then the secret had travelled
+//  in a URL and had to be reset.
+//
+//  This is the project's own recurring fault wearing another costume:
+//  something local guessing on behalf of something that already knew.
+//  We KNOW what an application ID looks like. Check it here, before it
+//  leaves the building.
+//
+//  IT NEVER PRINTS THE VALUE. Reporting the shape is the whole job, and
+//  a message that echoes a secret to a browser has made things worse.
+// ---------------------------------------------------------------------
+function checkClientId(value) {
+  const v = String(value || "");
+  if (/^\d{15,25}$/.test(v)) return null;
+  const looksLikeASecret = /^[A-Za-z0-9_-]{30,40}$/.test(v) && /[A-Za-z]/.test(v);
+  return problem(
+    "The value configured as the Discord Client ID is not a Client ID.",
+    "A Discord application ID is a long number, about 18 or 19 digits.\n" +
+      `What is configured is ${v.length} characters and is not all digits.\n\n` +
+      (looksLikeASecret
+        ? "IT HAS THE SHAPE OF A CLIENT SECRET. If that is what it is:\n" +
+          "  1. Reset the secret in the Discord developer portal NOW. It has\n" +
+          "     just travelled in a URL, so treat it as public.\n" +
+          "  2. Delete any DISCORD_CLIENT_ID variable in Cloudflare — the real\n" +
+          "     one is declared in wrangler.jsonc and a dashboard entry of the\n" +
+          "     same name overrides the file.\n" +
+          "  3. Put the new secret in DISCORD_CLIENT_SECRET.\n"
+        : "Check DISCORD_CLIENT_ID in wrangler.jsonc, and check nothing in the\n" +
+          "Cloudflare dashboard is overriding it with the same name.\n")
+  );
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -165,6 +207,11 @@ export default {
           "DISCORD_CLIENT_ID is missing. It is declared in wrangler.jsonc, so either that file lost its vars block or this Worker was deployed from somewhere else."
         );
       }
+      // Do not send a wrong ID to Discord and let Discord be the one to
+      // notice. Its answer is "Invalid Form Body", which is correct and
+      // useless.
+      const idFault = checkClientId(env.DISCORD_CLIENT_ID);
+      if (idFault) return idFault;
       // state: a random value we hand to Discord and get back. If what
       // comes back is not what we sent, the request did not start here,
       // and we refuse it. This is the whole defence against somebody
@@ -203,6 +250,8 @@ export default {
           "The state value did not match. If you have been sitting on the Discord page for a while, just start again."
         );
       }
+      const idFaultBack = checkClientId(env.DISCORD_CLIENT_ID);
+      if (idFaultBack) return idFaultBack;
       if (!env.DISCORD_CLIENT_SECRET || !env.SESSION_SECRET) {
         return problem(
           "This site is missing a secret.",
