@@ -78,10 +78,9 @@
   // answers "lobby_not_configured" with a sentence explaining itself,
   // and nothing else changes until the two steps below are done.
   //
-  //   1. Cloudflare dashboard -> Storage & Databases -> KV ->
-  //      Create a namespace, called  adeptsworn-lobby
-  //   2. Copy the id it shows, paste it below, delete the // marks from
-  //      the four lines, and publish.
+  // DONE, 10 September 2026. Namespace `adeptsworn-lobby` created in the
+  // dashboard under Workers KV -> Create instance, and its id pasted below.
+  // The block is live; nothing here needs doing again.
   //
   // A NAMESPACE ID IS NOT A SECRET. It names a namespace inside this
   // account and is useless to anybody without credentials for the
@@ -97,9 +96,9 @@
   //   in the game repo and is committed. Without it the box simply does
   //   not report in, and says so once in its banner. Nothing breaks.
   //
-  // "kv_namespaces": [
-  //   { "binding": "LOBBY", "id": "PASTE_THE_NAMESPACE_ID_HERE" }
-  // ],
+  "kv_namespaces": [
+    { "binding": "LOBBY", "id": "e668e5a9663f425a8fc01a8289ff536d" }
+  ],
 
   "name": "wispy-brook-7be4",
   "compatibility_date": "2026-09-06",
