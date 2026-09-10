@@ -16,6 +16,12 @@
 //                       page print a name
 //      /auth/logout     forget them
 //
+//  AND, since 10 September 2026, the Phase 2 server list -- a separate
+//  job with its own header further down this file:
+//
+//      /api/servers            the live list of internet games
+//      /api/servers/heartbeat  the Sydney box reporting in
+//
 //  THREE VALUES REACH THIS CODE AS env.  ONE IS IN THE REPOSITORY AND
 //  TWO MUST NEVER BE.  This repo is PUBLIC: a secret committed here is
 //  burned the moment it lands, and deleting it afterwards does not help,
@@ -195,6 +201,129 @@ function checkClientId(value) {
   );
 }
 
+// =====================================================================
+//  THE SERVER LIST -- Phase 2, "THE LOBBY". Added 10 September 2026.
+//
+//      GET   /api/servers            the live list. Public, read-only.
+//      POST  /api/servers/heartbeat  a game server saying "I am here".
+//
+//  WHY THIS IS HERE AND NOT ON THE BOX
+//
+//  online-service-plan.md's Phase 2 says "a small web service on the
+//  box". Ewen ruled against that on 10 September, using his own words
+//  from 8 September: the box is hardened to 22/tcp and 27015/udp, and a
+//  status panel should be "an outbound post from the box to a Cloudflare
+//  Worker, never an inbound port". So:
+//
+//    * no new inbound port on a machine that currently has two
+//    * no TLS certificate to manage, renew, or forget to renew
+//    * no second process on the box to keep alive
+//    * THE LIST SURVIVES THE BOX GOING DOWN, which is the case where a
+//      player most needs to be told something. A list served by the
+//      thing it lists is empty exactly when that matters most.
+//
+//  WHY ENTRIES EXPIRE INSTEAD OF BEING DELETED
+//
+//  Each entry is written with a TTL a little over three heartbeats. A
+//  server that dies, is killed, loses its network, or has its process
+//  reaped VANISHES ON ITS OWN, with nobody having to notice.
+//
+//  A "finished" message is an optimisation on top of that, never the
+//  mechanism. A list that needs a graceful shutdown to be correct is a
+//  list that is wrong precisely when something has gone wrong -- and on
+//  8 September this project watched a server die without saying a word,
+//  when a dropped SSH session took it down 23 turns into a game.
+//
+//  WHAT IS DELIBERATELY NOT IN AN ENTRY: PLAYER NAMES.
+//
+//  The plan's wording is "what games are running, WHO IS IN THEM, how do
+//  I join one". This ships the counts and not the names, on purpose, and
+//  by Ewen's own build-now-or-later test: adding names later invalidates
+//  nothing already written down, so they are a feature and can wait.
+//  Meanwhile a public endpoint listing the names of everybody currently
+//  playing is a privacy and a moderation surface, and cross-cutting rule
+//  4 is "collect as little personal data as possible -- data never
+//  stored cannot be leaked". Counts answer "is there a game I can join",
+//  which is the question the screen is actually asking.
+// =====================================================================
+
+// KV keys are prefixed so a list() cannot pick up anything else that
+// ever comes to share this namespace.
+const SERVER_PREFIX = "srv:";
+
+// A little over three heartbeats: miss one and you stay listed, miss
+// three and you are gone. 60 is Cloudflare's floor for expirationTtl.
+const SERVER_TTL_SECONDS = 90;
+const HEARTBEAT_HINT_SECONDS = 25;
+
+// The match ID alphabet, and it is the SAME set as MatchId.gd in the
+// game: no I, L, O, U, 0 or 1. Written out in full rather than loosened
+// to [A-Z0-9], because this is a public endpoint and the ID becomes a KV
+// key -- a strict shape here is what stops anything else being used as
+// one.
+const MATCH_ID =
+  /^ADS-[23456789ABCDEFGHJKMNPQRSTVWXYZ]{4}-[23456789ABCDEFGHJKMNPQRSTVWXYZ]{4}$/;
+
+const SERVER_STATES = ["lobby", "playing", "finished"];
+
+function jsonResponse(body, status = 200, extraHeaders = {}) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      ...extraHeaders,
+    },
+  });
+}
+
+// ---------------------------------------------------------------------
+//  CLEANING WHAT ARRIVES
+//
+//  The poster holds a shared secret, so this is not a defence against
+//  strangers -- it is a defence against the day that secret leaks, or a
+//  bug on the box sends something daft. Whatever leaves here goes
+//  STRAIGHT ONTO A LIST INSIDE EVERY PLAYER'S GAME CLIENT, so a 40,000
+//  character server name is somebody's afternoon.
+//
+//  Everything is CLAMPED rather than refused, except the match ID and
+//  the state. Those two are identity, and a wrong identity should be
+//  refused out loud rather than quietly turned into something else.
+// ---------------------------------------------------------------------
+function cleanText(value, limit) {
+  return String(value ?? "")
+    // Control characters, including the newlines that would otherwise let
+    // one entry pretend to be two in anything that prints a list.
+    .replace(/[\u0000-\u001F\u007F]/g, " ")
+    .trim()
+    .slice(0, limit);
+}
+
+function cleanNumber(value, low, high, fallback) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(high, Math.max(low, Math.round(n)));
+}
+
+// ---------------------------------------------------------------------
+//  IS THE LIST EVEN SWITCHED ON?
+//
+//  The KV namespace has to be created once by hand and its id pasted
+//  into wrangler.jsonc. Until that happens `env.LOBBY` is undefined --
+//  and THE SITE MUST NOT CARE. So this answers plainly instead of
+//  throwing: a 503 with a sentence in it, and an empty list rather than
+//  a stack trace. Same reasoning as problem() above. A blank page is the
+//  worst possible answer to "why is the server list empty".
+// ---------------------------------------------------------------------
+function lobbyMissing(env) {
+  if (env.LOBBY) return null;
+  return {
+    error: "lobby_not_configured",
+    detail:
+      "This Worker has no LOBBY KV namespace bound. Create one in Cloudflare, " +
+      "paste its id into wrangler.jsonc, and publish again.",
+  };
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -343,6 +472,181 @@ export default {
           Location: "https://adeptsworn.com/",
           "Set-Cookie": setCookie("aw_session", "", 0),
         },
+      });
+    }
+
+    // ---------- POST /api/servers/heartbeat ----------
+    //
+    // The ONE writing endpoint, and all that stands in front of it is a
+    // shared secret. That is proportionate: the worst a forger can do is
+    // advertise a game that is not there, which a player discovers in
+    // four seconds by failing to connect. It is emphatically NOT a login
+    // and nothing past this point is trusted with anything.
+    if (url.pathname === "/api/servers/heartbeat") {
+      if (request.method !== "POST") {
+        return jsonResponse({ error: "post_only" }, 405);
+      }
+      if (!env.LOBBY_SECRET) {
+        return jsonResponse(
+          {
+            error: "no_lobby_secret",
+            detail:
+              "LOBBY_SECRET is not set on this Worker. Set it as an encrypted " +
+              "secret in Cloudflare. It must never appear in this repository.",
+          },
+          503
+        );
+      }
+      // A BARE STRING COMPARE, and that is fine here where it would not
+      // be in readSession() above. The difference is worth knowing: a
+      // timing attack needs many thousands of quiet attempts to read a
+      // secret one character at a time, and reading a public list of game
+      // servers is not worth that to anybody. readSession guards WHO YOU
+      // ARE; this guards addresses that are public the moment they work.
+      const offered = (request.headers.get("Authorization") || "").replace(
+        /^Bearer\s+/i,
+        ""
+      );
+      if (offered !== env.LOBBY_SECRET) {
+        // No detail, on purpose. An error that explains how close you got
+        // is an error doing the attacker's work for him.
+        return jsonResponse({ error: "not_authorised" }, 401);
+      }
+      const missingForWrite = lobbyMissing(env);
+      if (missingForWrite) return jsonResponse(missingForWrite, 503);
+
+      let body;
+      try {
+        body = await request.json();
+      } catch {
+        return jsonResponse({ error: "bad_json" }, 400);
+      }
+
+      const match = cleanText(body.match, 20).toUpperCase();
+      if (!MATCH_ID.test(match)) {
+        return jsonResponse(
+          { error: "bad_match_id", detail: "Expected the shape ADS-7K2M-9QX4." },
+          400
+        );
+      }
+      const state = cleanText(body.state, 12).toLowerCase();
+      if (!SERVER_STATES.includes(state)) {
+        return jsonResponse(
+          {
+            error: "bad_state",
+            detail: "Expected one of " + SERVER_STATES.join(", ") + ".",
+          },
+          400
+        );
+      }
+
+      // A FINISHED MATCH GOES NOW rather than waiting out its TTL. This is
+      // the optimisation, not the mechanism -- see the note at the top of
+      // this section on why expiry has to be what actually removes it.
+      if (state === "finished") {
+        await env.LOBBY.delete(SERVER_PREFIX + match);
+        return jsonResponse({ ok: true, match, removed: true });
+      }
+
+      // THE ADDRESS COMES FROM THE CONNECTION, NOT FROM THE MESSAGE.
+      //
+      // The box does not get to name itself. CF-Connecting-IP is where the
+      // packet actually came from, so it cannot be mistyped into a config
+      // file, cannot go stale when the box is rebuilt on a new IP, and
+      // cannot be used to point a lobby full of players at somebody else's
+      // machine. It is also the address that is genuinely routable back,
+      // which is the only one worth publishing.
+      const host = request.headers.get("CF-Connecting-IP") || "";
+      if (!host) {
+        return jsonResponse(
+          { error: "no_source_address", detail: "CF-Connecting-IP was absent." },
+          400
+        );
+      }
+
+      const seats = cleanNumber(body.seats, 1, 16, 5);
+      const entry = {
+        match,
+        // The SERVER's name for itself. Not a person's name.
+        name: cleanText(body.name, 40) || "Adeptsworn",
+        host,
+        port: cleanNumber(body.port, 1, 65535, 27015),
+        // A CLIENT FILTERS ON THIS. PROTOCOL_VERSION is the gate, and a
+        // list that offers a game you will be refused from is a list that
+        // wastes your time -- so it travels, and the Internet tab can grey
+        // a row out AND SAY WHY, instead of letting the refusal be a
+        // surprise at the socket.
+        protocol: cleanNumber(body.protocol, 0, 9999, 0),
+        seats,
+        taken: cleanNumber(body.taken, 0, seats, 0),
+        humans: cleanNumber(body.humans, 0, seats, 0),
+        state,
+        version: cleanText(body.version, 24),
+        seen: Math.floor(Date.now() / 1000),
+      };
+
+      // WRITTEN INTO THE KEY'S METADATA AS WELL AS ITS VALUE, and that is
+      // not belt-and-braces -- it is what makes the read cheap. list()
+      // hands back metadata with every key, so GET /api/servers is ONE KV
+      // operation however many servers there are. Fetching each value in
+      // turn would be one call per server, which is the shape that quietly
+      // stops working at the point it begins to matter.
+      await env.LOBBY.put(SERVER_PREFIX + match, JSON.stringify(entry), {
+        expirationTtl: SERVER_TTL_SECONDS,
+        metadata: entry,
+      });
+
+      return jsonResponse({
+        ok: true,
+        match,
+        host,
+        // TOLD, not assumed. The box prints this, so a heartbeat that is
+        // too slow is visible from the box's own console rather than only
+        // by watching rows vanish from a list somewhere else.
+        heartbeat_within: SERVER_TTL_SECONDS,
+        heartbeat_hint: HEARTBEAT_HINT_SECONDS,
+      });
+    }
+
+    // ---------- GET /api/servers ----------
+    // Public and read-only. This is what the game's Internet tab asks, and
+    // a browser pointed at it sees exactly the same thing.
+    if (url.pathname === "/api/servers") {
+      if (request.method !== "GET" && request.method !== "HEAD") {
+        return jsonResponse({ error: "get_only" }, 405);
+      }
+      const missingForRead = lobbyMissing(env);
+      if (missingForRead) {
+        return jsonResponse({ ...missingForRead, servers: [], count: 0 }, 503);
+      }
+
+      const listed = await env.LOBBY.list({ prefix: SERVER_PREFIX, limit: 200 });
+      const now = Math.floor(Date.now() / 1000);
+      const servers = [];
+      for (const key of listed.keys) {
+        const entry = key.metadata;
+        // A key with no metadata was written by an older version of this
+        // Worker. Skipped rather than half-drawn: an entry with no address
+        // is not joinable, and a row a player cannot click is worse than a
+        // row that was never there.
+        if (!entry || !entry.host) continue;
+        servers.push({
+          ...entry,
+          seen_seconds_ago: Math.max(0, now - (entry.seen || now)),
+        });
+      }
+      // Newest first. Somebody scanning this wants the game that just
+      // opened, and "whatever order KV felt like" is not an order.
+      servers.sort((a, b) => (b.seen || 0) - (a.seen || 0));
+
+      return jsonResponse({ servers, count: servers.length }, 200, {
+        // FIVE SECONDS. Not none, not a minute. It stops a room full of
+        // players each costing a KV read, and five seconds is less than
+        // the time it takes to read a list and click a row.
+        "Cache-Control": "public, max-age=5",
+        // A public read-only list, so the website can show the same thing
+        // the game shows without needing a second endpoint for it.
+        "Access-Control-Allow-Origin": "*",
       });
     }
 

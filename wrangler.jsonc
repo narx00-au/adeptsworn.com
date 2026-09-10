@@ -63,6 +63,44 @@
   // Publish-Website.bat finds this folder BY index.html. Change both or
   // neither.
 
+  // ------------------------------------------------------------------
+  //  THE SERVER LIST -- Phase 2. Added 10 September 2026.
+  // ------------------------------------------------------------------
+  // The Worker gained /api/servers and /api/servers/heartbeat, and they
+  // need somewhere to keep the list. That is a KV namespace, and it has
+  // to be created ONCE, BY HAND, because a namespace id is issued by
+  // Cloudflare and cannot be invented here.
+  //
+  // THE BLOCK BELOW IS COMMENTED OUT ON PURPOSE. A kv_namespaces entry
+  // with a made-up id does not warn -- it FAILS THE DEPLOY, and it would
+  // fail it for the whole site, including a sign-in that works today.
+  // So publishing keeps working exactly as it does now, /api/servers
+  // answers "lobby_not_configured" with a sentence explaining itself,
+  // and nothing else changes until the two steps below are done.
+  //
+  //   1. Cloudflare dashboard -> Storage & Databases -> KV ->
+  //      Create a namespace, called  adeptsworn-lobby
+  //   2. Copy the id it shows, paste it below, delete the // marks from
+  //      the four lines, and publish.
+  //
+  // A NAMESPACE ID IS NOT A SECRET. It names a namespace inside this
+  // account and is useless to anybody without credentials for the
+  // account, so it is safe in this public repo -- unlike the two values
+  // above it, and unlike LOBBY_SECRET below.
+  //
+  // "binding" is the name the code uses: env.LOBBY. It must stay LOBBY.
+  //
+  // "LOBBY_SECRET" IS A REAL SECRET AND IS NOT IN THIS FILE.
+  //   Set it on the Worker in Cloudflare, encrypted, like the other two.
+  //   The same string goes in  out\server.cfg  on the PC that deploys,
+  //   as  lobby_secret = "..."  -- NOT in server.cfg.example, which is
+  //   in the game repo and is committed. Without it the box simply does
+  //   not report in, and says so once in its banner. Nothing breaks.
+  //
+  // "kv_namespaces": [
+  //   { "binding": "LOBBY", "id": "PASTE_THE_NAMESPACE_ID_HERE" }
+  // ],
+
   "name": "wispy-brook-7be4",
   "compatibility_date": "2026-09-06",
   "main": "./src/index.js",
