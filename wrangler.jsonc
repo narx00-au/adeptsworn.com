@@ -1,10 +1,14 @@
 {
   // Adeptsworn public website — https://adeptsworn.com
   //
-  // THIS USED TO SAY "this is not a program". As of 8 September 2026 it
-  // is one: there is a Worker script now, and it does exactly one job —
-  // signing in with Discord. Everything else on this site is still a
-  // plain file served without any code running.
+  // THIS WORKER NOW DOES THREE JOBS. They were built at different times and
+  // they must not tread on each other. src/router.js is the front door and
+  // says which is which; read that file first.
+  //
+  //   1. Discord sign-in        /auth/*        src/index.js   (8 Sept)
+  //   2. The game's server list /api/servers   src/index.js   (10 Sept)
+  //   3. The website and its    /              src/site.js    (12 Sept)
+  //      editor                 /admin-api/*
   //
   // "name" MUST match the existing Cloudflare Worker exactly. Change it and
   //   wrangler builds a NEW Worker under the new name and leaves the domain
@@ -12,102 +16,70 @@
   // "compatibility_date" pins the Cloudflare runtime behaviour to how it
   //   worked on this date, so a future change on their end cannot silently
   //   alter how the site is served. Leave it alone unless you have a reason.
-  // "assets.directory" is what gets published. "./" means this whole folder.
-  // "main" is the Worker script. Cloudflare serves a matching FILE first and
-  //   only calls the script when there is no file at that address — so
-  //   index.html, assets\ and robots.txt reach people exactly as before,
-  //   and a bug in the script cannot take the site down. Only /auth/... is
-  //   handled by code.
-  // "assets.binding" lets the script hand a request back to the file server.
-  //   It is only there as a safety net for an address that is neither.
+  // "main" USED to be ./src/index.js and is now ./src/router.js. index.js is
+  //   unchanged and still does everything it did; the router just decides
+  //   what reaches it. That was the safest way to add a third job: the code
+  //   that already works was not opened.
   //
   // ------------------------------------------------------------------
-  //  WHY THE CLIENT ID IS IN THIS FILE AND THE OTHER TWO ARE NOT
+  //  assets.run_worker_first — READ THIS BEFORE CHANGING IT
   // ------------------------------------------------------------------
-  // The Discord Client ID is PUBLIC BY DESIGN. It travels in the address
-  // bar of every person who signs in, so putting it in a public repo
-  // gives away nothing that was not already on show.
+  // Cloudflare serves a matching FILE before it runs any code. index.html is
+  // still sitting in this folder, so without this line "/" would be served
+  // from that file and the Worker would never build the page. The failure
+  // would be silent: the site would simply stop updating, with no error
+  // anywhere, looking exactly like a deploy that did nothing.
   //
-  // Keeping it here rather than in the Cloudflare dashboard is deliberate.
-  // Cloudflare's own documentation does NOT settle what happens to a
-  // plain variable set in the dashboard when a later deploy arrives with
-  // a config that does not mention it (checked 8 Sept, not remembered).
-  // A value declared HERE cannot be quietly lost that way, and it is
-  // version-controlled besides. So: sidestep the question rather than
-  // find out the hard way, six weeks from now, with a login that stopped
-  // working and nothing in a log to say why.
+  // index.html is deliberately still published. If this line is ever removed
+  // or stops working, the site falls back to the hand-written page of
+  // 10 September rather than to nothing at all.
   //
-  // THE OTHER TWO ARE REAL SECRETS AND MUST NEVER APPEAR IN THIS
-  // REPOSITORY, in this file or any other:
-  //
-  //   DISCORD_CLIENT_SECRET   set on the Worker in Cloudflare, encrypted
-  //   SESSION_SECRET          same. Ours. Any long random string.
-  //
-  // Cloudflare's docs DO confirm secrets survive a deploy. A secret
-  // committed to a public repo is burned the moment it lands, and
-  // deleting it afterwards does not help — the commit stays in a public
-  // history.
+  // /auth/* and /api/servers are NOT listed here and do not need to be —
+  // there are no files at those addresses, so they reach the Worker anyway.
+  // That is how they have always worked and this changes nothing for them.
   //
   // ------------------------------------------------------------------
-  //  ONE UNTIDINESS, WRITTEN DOWN RATHER THAN HIDDEN
+  //  WHY THE CLIENT ID IS IN THIS FILE AND THE SECRETS ARE NOT
   // ------------------------------------------------------------------
-  // Because the assets directory is this whole folder, src\index.js is
-  // ALSO published as a file, so https://adeptsworn.com/src/index.js can
-  // be read by anyone. Cloudflare documents no way to exclude a file from
-  // an assets folder — no .assetsignore, nothing in the assets config
-  // (three of their doc pages checked on 8 Sept). It leaks nothing: this
-  // repository is public, so that code was already readable on GitHub,
-  // and no secret is in any file here. The tidy fix, if it ever irritates,
-  // is to move the site's files into a public\ subfolder and point
-  // "directory" at it — but that moves index.html too, and
-  // Publish-Website.bat finds this folder BY index.html. Change both or
-  // neither.
-
+  // The Discord Client ID is PUBLIC BY DESIGN. It travels in the address bar
+  // of every person who signs in, so putting it in a public repo gives away
+  // nothing that was not already on show. DISCORD_CLIENT_SECRET,
+  // SESSION_SECRET, LOBBY_SECRET and ADMIN_PASSWORD are Cloudflare secrets
+  // and must never appear here.
+  //
   // ------------------------------------------------------------------
-  //  THE SERVER LIST -- Phase 2. Added 10 September 2026.
+  //  THE TWO KV STORES ARE NOT INTERCHANGEABLE
   // ------------------------------------------------------------------
-  // The Worker gained /api/servers and /api/servers/heartbeat, and they
-  // need somewhere to keep the list. That is a KV namespace, and it has
-  // to be created ONCE, BY HAND, because a namespace id is issued by
-  // Cloudflare and cannot be invented here.
-  //
-  // THE BLOCK BELOW IS COMMENTED OUT ON PURPOSE. A kv_namespaces entry
-  // with a made-up id does not warn -- it FAILS THE DEPLOY, and it would
-  // fail it for the whole site, including a sign-in that works today.
-  // So publishing keeps working exactly as it does now, /api/servers
-  // answers "lobby_not_configured" with a sentence explaining itself,
-  // and nothing else changes until the two steps below are done.
-  //
-  // DONE, 10 September 2026. Namespace `adeptsworn-lobby` created in the
-  // dashboard under Workers KV -> Create instance, and its id pasted below.
-  // The block is live; nothing here needs doing again.
-  //
-  // A NAMESPACE ID IS NOT A SECRET. It names a namespace inside this
-  // account and is useless to anybody without credentials for the
-  // account, so it is safe in this public repo -- unlike the two values
-  // above it, and unlike LOBBY_SECRET below.
-  //
-  // "binding" is the name the code uses: env.LOBBY. It must stay LOBBY.
-  //
-  // "LOBBY_SECRET" IS A REAL SECRET AND IS NOT IN THIS FILE.
-  //   Set it on the Worker in Cloudflare, encrypted, like the other two.
-  //   The same string goes in  out\server.cfg  on the PC that deploys,
-  //   as  lobby_secret = "..."  -- NOT in server.cfg.example, which is
-  //   in the game repo and is committed. Without it the box simply does
-  //   not report in, and says so once in its banner. Nothing breaks.
-  //
-  "kv_namespaces": [
-    { "binding": "LOBBY", "id": "e668e5a9663f425a8fc01a8289ff536d" }
-  ],
+  // LOBBY holds the game's server list. SITE holds the website's words and
+  // colours. They are separate on purpose: a website edit can never reach
+  // the game's data, and the game can never overwrite the site.
 
   "name": "wispy-brook-7be4",
   "compatibility_date": "2026-09-06",
-  "main": "./src/index.js",
+  "main": "./src/router.js",
+
   "vars": {
     "DISCORD_CLIENT_ID": "1546109338169639013"
   },
+
+  "kv_namespaces": [
+    {
+      "binding": "LOBBY",
+      "id": "e668e5a9663f425a8fc01a8289ff536d"
+    },
+    {
+      "binding": "SITE",
+      "id": "28e125a7ca36482d8915781959ca2ce2"
+    }
+  ],
+
   "assets": {
     "directory": "./",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
+    "run_worker_first": ["/", "/index.html", "/admin-api/*", "/media/*"]
+  },
+
+  "observability": {
+    "enabled": true
   }
 }

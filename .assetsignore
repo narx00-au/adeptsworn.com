@@ -1,0 +1,21 @@
+# Files in this folder that should NOT be published as part of the website.
+# Same idea as .gitignore. Cloudflare reads this when it uploads the site.
+#
+# src/ is the Worker's code. It is compiled into the Worker itself, so it does
+# not also need to sit on the web as a downloadable file.
+#
+# index.html is NOT listed here on purpose. It is the hand-written page as it
+# stood on 10 September, and it stays published as the fallback: if
+# run_worker_first in wrangler.jsonc is ever removed or stops working, "/"
+# serves that file instead of nothing. The Worker redirects /index.html to /
+# so nobody reaches the stale copy by accident while things are working.
+
+**/node_modules
+**/.git
+**/.DS_Store
+src
+wrangler.jsonc
+package.json
+package-lock.json
+.gitignore
+.assetsignore

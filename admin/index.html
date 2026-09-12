@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Adeptsworn — website editor</title>
+<link rel="icon" href="/assets/favicon.png" sizes="32x32">
+<link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body>
+
+<!-- ===================== SIGN IN ===================== -->
+<div id="gate" class="gate" hidden>
+  <form class="gate__card" id="login-form">
+    <h1>Adeptsworn</h1>
+    <p class="gate__sub">Website editor</p>
+    <label class="lbl" for="pw">Password</label>
+    <input class="in" id="pw" type="password" autocomplete="current-password" autofocus>
+    <button class="btn btn--go" type="submit">Sign in</button>
+    <p class="gate__note" id="gate-note"></p>
+  </form>
+</div>
+
+<!-- ===================== THE EDITOR ===================== -->
+<div id="app" class="app" hidden>
+
+  <header class="bar">
+    <span class="bar__mark">Adeptsworn</span>
+    <span class="bar__where">website editor</span>
+    <span class="chip" id="save-state">Loading…</span>
+    <span class="bar__spacer"></span>
+    <button class="btn" id="btn-history" type="button">History</button>
+    <button class="btn" id="btn-view" type="button">View live site</button>
+    <button class="btn btn--go" id="btn-publish" type="button">Publish</button>
+    <button class="btn btn--quiet" id="btn-logout" type="button">Log out</button>
+  </header>
+
+  <div class="cols">
+
+    <!-- ---------- LEFT: what you are editing ---------- -->
+    <div class="left">
+      <nav class="tabs" id="tabs">
+        <button class="tab is-on" data-tab="sections" type="button">Sections</button>
+        <button class="tab" data-tab="design" type="button">Design</button>
+        <button class="tab" data-tab="settings" type="button">Settings</button>
+        <button class="tab" data-tab="pictures" type="button">Pictures</button>
+      </nav>
+
+      <div class="pane" id="pane-sections">
+        <ol class="seclist" id="seclist"></ol>
+        <button class="btn btn--wide" id="btn-add" type="button">+ Add a section</button>
+        <div class="editor" id="editor"></div>
+      </div>
+
+      <div class="pane" id="pane-design" hidden></div>
+      <div class="pane" id="pane-settings" hidden></div>
+      <div class="pane" id="pane-pictures" hidden></div>
+    </div>
+
+    <!-- ---------- RIGHT: what it looks like ---------- -->
+    <div class="right">
+      <div class="viewbar">
+        <span class="viewbar__label">Preview</span>
+        <div class="seg" id="widths">
+          <button class="seg__btn is-on" data-w="full" type="button">Desktop</button>
+          <button class="seg__btn" data-w="820" type="button">Tablet</button>
+          <button class="seg__btn" data-w="390" type="button">Phone</button>
+        </div>
+        <button class="btn btn--quiet" id="btn-refresh" type="button">Refresh</button>
+      </div>
+      <div class="stage" id="stage">
+        <!-- No src here on purpose. The preview is only loaded once you are
+             signed in; before that the site would hand back the LIVE page and
+             the editing layer would be missing with nothing to say why. -->
+        <iframe id="preview" title="Preview of the site"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== POP-UPS ===================== -->
+<div class="modal" id="modal" hidden>
+  <div class="modal__card">
+    <h2 class="modal__title" id="modal-title"></h2>
+    <div class="modal__body" id="modal-body"></div>
+    <div class="modal__foot" id="modal-foot"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="/admin/admin.js"></script>
+</body>
+</html>
